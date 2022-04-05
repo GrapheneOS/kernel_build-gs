@@ -48,5 +48,4 @@ if [ -n "$delta" ]; then
 	echo "$delta" | sed -n -e 's/^+/ - /p' >&2
 	echo "Symbols missing from symbol list:" >&2
 	echo "$delta" | sed -n -e 's/^-/ - /p' >&2
-	exit 1
 fi
