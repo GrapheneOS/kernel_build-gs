@@ -1,4 +1,3 @@
-#!/bin/bash -e
 # Copyright (C) 2022 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,13 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Script used as --workspace_status_command.
-# Must execute at the root of workspace.
-# https://docs.bazel.build/versions/main/command-line-reference.html#flag--workspace_status_command
+def _print_debug_impl(ctx):
+    prefix = {}
+    if ctx.attr.prefix_label:
+        prefix = "{}: ".format(ctx.label)
+    print("{}{}".format(prefix, ctx.attr.content))
 
-if [[ ! -f "WORKSPACE" ]]; then
-  echo "ERROR: workspace_status.sh must be executed at the root of Bazel workspace." >&2
-  exit 1
-fi
-
-build/kernel/build-tools/path/linux-x86/python3 build/kernel/kleaf/workspace_status.py
+print_debug = rule(
+    implementation = _print_debug_impl,
+    doc = "A rule that prints a debug string when built. No outputs are generated.",
+    attrs = {
+        "prefix_label": attr.bool(
+            default = True,
+            doc = "Prefix with the label of this target.",
+        ),
+        "content": attr.string(doc = "The string to print."),
+    },
+)

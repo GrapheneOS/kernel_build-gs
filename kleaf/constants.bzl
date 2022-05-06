@@ -25,6 +25,11 @@ aarch64_outs = _common_outs + [
     "Image.lz4",
 ]
 
+aarch64_gz_outs = _common_outs + [
+    "Image",
+    "Image.gz",
+]
+
 # Common output files for x86_64 kernel builds.
 x86_64_outs = _common_outs + ["bzImage"]
 
@@ -37,6 +42,12 @@ GKI_DOWNLOAD_CONFIGS = [
         "target_suffix": "uapi_headers",
         "outs": [
             "kernel-uapi-headers.tar.gz",
+        ],
+    },
+    {
+        "target_suffix": "unstripped_modules_archive",
+        "outs": [
+            "unstripped_modules.tar.gz",
         ],
     },
     {

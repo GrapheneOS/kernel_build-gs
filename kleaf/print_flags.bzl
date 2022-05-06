@@ -1,4 +1,4 @@
-# Copyright (C) 2021 The Android Open Source Project
+# Copyright (C) 2022 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,8 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//build/kernel/kleaf:workspace.bzl", "define_kleaf_workspace")
+load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 
-toplevel_output_directories(paths = ["out"])
+def _impl(ctx):
+    for flag in ctx.attr.flags:
+        print("{}={}".format(flag.label, flag[BuildSettingInfo].value))
 
-define_kleaf_workspace()
+print_flags = rule(
+    doc = "A rule that prints flags",
+    implementation = _impl,
+    attrs = {
+        "flags": attr.label_list(providers = [BuildSettingInfo]),
+    },
+)

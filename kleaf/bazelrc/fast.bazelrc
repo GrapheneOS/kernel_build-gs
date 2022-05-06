@@ -1,4 +1,4 @@
-# Copyright (C) 2021 The Android Open Source Project
+# Copyright (C) 2022 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,8 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//build/kernel/kleaf:workspace.bzl", "define_kleaf_workspace")
+# Various configs to boost developer builds.
+# See build/kernel/kleaf/docs/fast.md.
 
-toplevel_output_directories(paths = ["out"])
+# Let rules know what configs we are using now
+build:fast --//build/kernel/kleaf:config_fast
 
-define_kleaf_workspace()
+# Thin LTO by default.
+build:fast --lto=thin
+
+# Inherit from local: reduce sandboxes.
+build:fast --config=local

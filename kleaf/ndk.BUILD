@@ -1,4 +1,4 @@
-# Copyright (C) 2021 The Android Open Source Project
+# Copyright (C) 2022 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,8 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//build/kernel/kleaf:workspace.bzl", "define_kleaf_workspace")
+package(default_visibility = ["//visibility:public"])
 
-toplevel_output_directories(paths = ["out"])
-
-define_kleaf_workspace()
+filegroup(
+    name = "sysroot",
+    srcs = glob(
+        [
+            "toolchains/llvm/prebuilt/linux-x86_64/sysroot/**",
+        ],
+        allow_empty = False,
+    ),
+)
