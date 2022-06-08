@@ -31,6 +31,8 @@ load(
     "CI_TARGET_MAPPING",
     "GKI_DOWNLOAD_CONFIGS",
     "GKI_MODULES",
+    "MODULE_OUTS_FILE_OUTPUT_GROUP",
+    "MODULE_OUTS_FILE_SUFFIX",
     "aarch64_outs",
     "x86_64_outs",
 )
@@ -441,6 +443,7 @@ def define_common_kernels(
         print_debug(
             name = name + "_print_configs",
             content = json.encode_indent(target_config, indent = "    ").replace("null", "None"),
+            tags = ["manual"],
         )
 
         kernel_build_abi(
@@ -486,10 +489,8 @@ def define_common_kernels(
             kernel_modules_install = name + "_modules_install",
             # Sync with GKI_DOWNLOAD_CONFIGS, "additional_artifacts".
             build_system_dlkm = True,
-            deps = [
-                # Keep the following in sync with build.config.gki* MODULES_LIST
-                "android/gki_system_dlkm_modules",
-            ],
+            # Keep in sync with build.config.gki* MODULES_LIST
+            modules_list = "android/gki_system_dlkm_modules",
         )
 
         # module_staging_archive from <name>
@@ -539,6 +540,7 @@ def define_common_kernels(
             data = dist_targets,
             flat = True,
             dist_dir = "out/{branch}/dist".format(branch = BRANCH),
+            log = "info",
         )
 
         kernel_build_abi_dist(
@@ -547,6 +549,7 @@ def define_common_kernels(
             data = dist_targets,
             flat = True,
             dist_dir = "out_abi/{branch}/dist".format(branch = BRANCH),
+            log = "info",
         )
 
         native.test_suite(
@@ -613,6 +616,13 @@ def _define_prebuilts(**kwargs):
         native.filegroup(
             name = name + "_downloaded",
             srcs = ["@{}//{}".format(repo_name, filename) for filename in main_target_outs],
+            tags = ["manual"],
+        )
+
+        native.filegroup(
+            name = name + "_module_outs_file",
+            srcs = [":" + name],
+            output_group = MODULE_OUTS_FILE_OUTPUT_GROUP,
         )
 
         # A kernel_filegroup that:
@@ -637,6 +647,10 @@ def _define_prebuilts(**kwargs):
             kernel_srcs = [source_package_name + "_sources"],
             kernel_uapi_headers = source_package_name + "_uapi_headers_download_or_build",
             collect_unstripped_modules = _COLLECT_UNSTRIPPED_MODULES,
+            module_outs_file = select({
+                ":use_prebuilt_gki_set": "@{}//{}{}".format(repo_name, name, MODULE_OUTS_FILE_SUFFIX),
+                "//conditions:default": ":" + name + "_module_outs_file",
+            }),
             **kwargs
         )
 
@@ -647,6 +661,7 @@ def _define_prebuilts(**kwargs):
             native.filegroup(
                 name = name + "_" + target_suffix + "_downloaded",
                 srcs = ["@{}//{}".format(repo_name, filename) for filename in suffixed_target_outs],
+                tags = ["manual"],
             )
 
             # A filegroup that:
@@ -721,4 +736,5 @@ def define_db845c(
         ],
         dist_dir = dist_dir,
         flat = True,
+        log = "info",
     )
