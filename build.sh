@@ -1095,7 +1095,9 @@ if [ -n "${MODULES}" ]; then
     cp ${MODULES_ROOT_DIR}/modules.load ${DIST_DIR}/vendor_boot.modules.load
     echo "${MODULES_OPTIONS}" > ${MODULES_ROOT_DIR}/modules.options
 
-    mkbootfs "${INITRAMFS_STAGING_DIR}" >"${MODULES_STAGING_DIR}/initramfs.cpio"
+    # Workaround strange issue where mkbootfs cannot be found on coral build
+    TMPTOOLROOT="$(dirname "$(realpath "$0")")"
+    $TMPTOOLROOT/../prebuilts/kernel-build-tools/linux-x86/bin/mkbootfs "${INITRAMFS_STAGING_DIR}" >"${MODULES_STAGING_DIR}/initramfs.cpio"
     ${RAMDISK_COMPRESS} "${MODULES_STAGING_DIR}/initramfs.cpio" >"${DIST_DIR}/initramfs.img"
   fi
 fi
