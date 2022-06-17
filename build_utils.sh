@@ -221,9 +221,9 @@ function build_vendor_dlkm() {
   fi
 
   # Modules loaded in vendor_boot should not be loaded in vendor_dlkm.
-  if [ -f ${DIST_DIR}/vendor_boot.modules.load ]; then
+  if [ -f ${DIST_DIR}/modules.load ]; then
     local stripped_modules_load="$(mktemp)"
-    ! grep -x -v -F -f ${DIST_DIR}/vendor_boot.modules.load \
+    ! grep -x -v -F -f ${DIST_DIR}/modules.load \
       ${vendor_dlkm_modules_load} > ${stripped_modules_load}
     mv -f ${stripped_modules_load} ${vendor_dlkm_modules_load}
   fi
@@ -525,6 +525,35 @@ function build_gki_artifacts_x86_64() {
   gki_add_avb_footer "${boot_image_path}" "$(gki_get_boot_img_size)"
 }
 
+# gki_dry_run_certify_bootimg <boot_image> <gki_artifacts_info_file>
+# The certify_bootimg script will be executed on a server over a GKI
+# boot.img during the official certification process, which embeds
+# a GKI certificate into the boot.img. The certificate is for Android
+# VTS to verify that a GKI boot.img is authentic.
+# Dry running the process here so we can catch related issues early.
+function gki_dry_run_certify_bootimg() {
+  certify_bootimg --boot_img "$1" \
+    --algorithm SHA256_RSA4096 \
+    --key tools/mkbootimg/gki/testdata/testkey_rsa4096.pem \
+    --gki_info "$2" \
+    --output "$1"
+}
+
+# build_gki_artifacts_info <output_gki_artifacts_info_file>
+function build_gki_artifacts_info() {
+  local artifacts_info="certify_bootimg_extra_args=--prop ARCH:${ARCH} \
+--prop BRANCH:${BRANCH}"
+
+  if [ -n "${BUILD_NUMBER}" ]; then
+    artifacts_info="${artifacts_info} --prop BUILD_NUMBER:${BUILD_NUMBER}"
+  fi
+
+  KERNEL_RELEASE="$(cat "${OUT_DIR}"/include/config/kernel.release)"
+  artifacts_info="${artifacts_info} --prop KERNEL_RELEASE:${KERNEL_RELEASE}"
+
+  echo "${artifacts_info}" > "$1"
+}
+
 function build_gki_artifacts_aarch64() {
   if ! [ -f "${DIST_DIR}/Image" ]; then
     echo "ERROR: '${DIST_DIR}/Image' doesn't exist" >&2
@@ -536,7 +565,10 @@ function build_gki_artifacts_aarch64() {
     DEFAULT_MKBOOTIMG_ARGS+=("--cmdline" "${GKI_KERNEL_CMDLINE}")
   fi
 
-  local built_boot_images=()
+  GKI_ARTIFACTS_INFO_FILE="${DIST_DIR}/gki-info.txt"
+  build_gki_artifacts_info "${GKI_ARTIFACTS_INFO_FILE}"
+  local images_to_pack=("$(basename "${GKI_ARTIFACTS_INFO_FILE}")")
+
   for kernel_path in "${DIST_DIR}"/Image*; do
     GKI_MKBOOTIMG_ARGS=("${DEFAULT_MKBOOTIMG_ARGS[@]}")
     GKI_MKBOOTIMG_ARGS+=("--kernel" "${kernel_path}")
@@ -549,17 +581,21 @@ function build_gki_artifacts_aarch64() {
         boot_image="boot-${compression}.img"
     fi
 
-    GKI_MKBOOTIMG_ARGS+=("--output" "${DIST_DIR}/${boot_image}")
+    boot_image_path="${DIST_DIR}/${boot_image}"
+    GKI_MKBOOTIMG_ARGS+=("--output" "${boot_image_path}")
     "${MKBOOTIMG_PATH}" "${GKI_MKBOOTIMG_ARGS[@]}"
 
-    gki_add_avb_footer "${DIST_DIR}/${boot_image}" \
+    gki_add_avb_footer "${boot_image_path}" \
       "$(gki_get_boot_img_size "${compression}")"
-    built_boot_images+=("${boot_image}")
+    gki_dry_run_certify_bootimg "${boot_image_path}" \
+      "${GKI_ARTIFACTS_INFO_FILE}"
+    images_to_pack+=("${boot_image}")
   done
 
   GKI_BOOT_IMG_ARCHIVE="boot-img.tar.gz"
-  echo "Creating ${GKI_BOOT_IMG_ARCHIVE} for" "${built_boot_images[@]}"
-  tar -czf "${DIST_DIR}/${GKI_BOOT_IMG_ARCHIVE}" -C "${DIST_DIR}" "${built_boot_images[@]}"
+  echo "Creating ${GKI_BOOT_IMG_ARCHIVE} for" "${images_to_pack[@]}"
+  tar -czf "${DIST_DIR}/${GKI_BOOT_IMG_ARCHIVE}" -C "${DIST_DIR}" \
+    "${images_to_pack[@]}"
 }
 
 function build_gki_artifacts() {

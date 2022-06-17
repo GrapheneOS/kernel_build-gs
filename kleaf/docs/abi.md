@@ -34,12 +34,24 @@ $ tools/bazel build //common:kernel_aarch64_abi_dump
 This command extracts the ABI, but does not compare it. This is similar to
 `build/build_abi.sh --nodiff`.
 
-### Update the ABI definition
+### Update the ABI definition {#update-abi}
 
 **Note**: You must [update the symbol list](#update-symbol-list) before
 updating the ABI definition. The
 Bazel command below does not also update the source symbol list, unlike
 the `build_abi.sh` command.
+
+If ABI definition doesn't exists i.e. if this is the first time it is being
+generated then first and empty symbol file needs to be created and the symbol
+list needs to be generated using the `nodiff_update` target as below:
+
+```shell
+touch common/android/abi_gki_aarch64.xml
+bazel run //common:kernel_aarch64_abi_nodiff_update
+```
+
+Second time onwards you can use the `//common:kernel_aarch64_abi_update` target
+as below:
 
 ```shell
 $ tools/bazel run //common:kernel_aarch64_abi_update
@@ -49,6 +61,18 @@ This compares the ABIs, then updates the `abi_definition`
 of `//common:kernel_aarch64`, which is `common/android/abi_gki_aarch64.xml`. The
 exit code reflects whether an ABI change is detected in the comparison, just
 like `build_abi.sh --update`.
+
+Running the script with `--commit` creates a git commit with
+pre-filled message. For example:
+
+```shell
+# -- is needed before --commit to pass the argument to the script.
+$ bazel run //common:kernel_aarch64_abi_update -- --commit
+```
+
+The command brings up your pre-configured text editor for git to edit the
+commit message. You may edit the subject line, add additional message, and add
+a bug number.
 
 If you do not wish to compare the ABIs before the update, you may execute the
 following instead:

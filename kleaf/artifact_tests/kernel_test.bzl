@@ -14,15 +14,20 @@
 
 def kernel_module_test(
         name,
-        modules = None):
+        modules = None,
+        **kwargs):
     """A test on artifacts produced by [kernel_module](#kernel_module).
 
     Args:
         name: name of test
         modules: The list of `*.ko` kernel modules, or targets that produces
             `*.ko` kernel modules (e.g. [kernel_module](#kernel_module)).
+        kwargs: Additional attributes to the internal rule, e.g.
+          [`visibility`](https://docs.bazel.build/versions/main/visibility.html).
+          See complete list
+          [here](https://docs.bazel.build/versions/main/be/common-definitions.html#common-attributes).
     """
-    script = "//build/kernel/kleaf/tests:kernel_module_test.py"
+    script = "//build/kernel/kleaf/artifact_tests:kernel_module_test.py"
     modinfo = "//build/kernel:hermetic-tools/modinfo"
     args = ["--modinfo", "$(location {})".format(modinfo)]
     data = [modinfo]
@@ -39,18 +44,24 @@ def kernel_module_test(
         data = data,
         args = args,
         timeout = "short",
+        **kwargs
     )
 
 def kernel_build_test(
         name,
-        target = None):
+        target = None,
+        **kwargs):
     """A test on artifacts produced by [kernel_build](#kernel_build).
 
     Args:
         name: name of test
         target: The [`kernel_build()`](#kernel_build).
+        kwargs: Additional attributes to the internal rule, e.g.
+          [`visibility`](https://docs.bazel.build/versions/main/visibility.html).
+          See complete list
+          [here](https://docs.bazel.build/versions/main/be/common-definitions.html#common-attributes).
     """
-    script = "//build/kernel/kleaf/tests:kernel_build_test.py"
+    script = "//build/kernel/kleaf/artifact_tests:kernel_build_test.py"
     strings = "//build/kernel:hermetic-tools/strings"
     args = ["--strings", "$(location {})".format(strings)]
     if target:
@@ -64,4 +75,5 @@ def kernel_build_test(
         data = [target, strings],
         args = args,
         timeout = "short",
+        **kwargs
     )

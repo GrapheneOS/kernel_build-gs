@@ -343,7 +343,7 @@ $ bazel build --lto={default,none,thin,full} TARGETS
 $ bazel run   --lto={default,none,thin,full} TARGETS
 ```
 
-See [disable LTO during development](impl.md#disable-lto-during-development).
+See [disable LTO during development](lto.md).
 
 ## TAGS\_CONFIG
 
@@ -661,6 +661,24 @@ gki_artifacts()
 **NOTE**: `gki_artifacts` is an implementation detail, and it should only be
 invoked by GKI targets.
 
+For GKI targets, it may be configured via the following:
+
+```python
+define_common_kernels(
+  target_configs = {
+    "kernel_aarch64": {
+      "build_gki_artifacts": True,
+      "gki_boot_img_sizes": {
+        "": "67108864",
+        "lz4": "53477376",
+      },
+    },
+  },
+)
+```
+
+See [documentation for all rules].
+
 ## GKI\_KERNEL\_CMDLINE
 
 ```python
@@ -669,6 +687,24 @@ gki_artifacts(gki_kernel_cmdline=...)
 
 **NOTE**: `gki_artifacts` is an implementation detail, and it should only be
 invoked by GKI targets.
+
+## KBUILD\_SYMTYPES
+
+If `KBUILD_SYMTYPES=1` is specified in build configs:
+
+```python
+kernel_build(kbuild_symtypes="true")
+```
+
+See [documentation for all rules].
+
+To specify `KBUILD_SYMTYPES=1` at build time:
+
+```shell
+$ bazel build --kbuild_symtypes ...
+```
+
+See [symtypes.md](symtypes.md) for details.
 
 [documentation for all rules]: https://ci.android.com/builds/latest/branches/aosp_kernel-common-android-mainline/targets/kleaf_docs/view/index.html
 

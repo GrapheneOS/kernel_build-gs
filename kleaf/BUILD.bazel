@@ -34,6 +34,13 @@ string_flag(
     ],
 )
 
+# If true, set `KBUILD_SYMTYPES=1` for kernel_build() with
+# kbuild_symtypes="auto".
+bool_flag(
+    name = "kbuild_symtypes",
+    build_setting_default = False,
+)
+
 # Debug options
 
 bool_flag(
@@ -63,6 +70,7 @@ _config_values = (
 print_flags(
     name = "print_flags",
     flags = [
+        ":kbuild_symtypes",
         ":lto",
     ] + [":config_" + value for value in _config_values],
 )
@@ -73,6 +81,27 @@ exports_files([
     "check_declared_output_list.py",
     "check_duplicated_files_in_archives.py",
 ])
+
+bzl_library(
+    name = "directory_with_structure_def",
+    srcs = ["directory_with_structure.bzl"],
+    visibility = ["//build/kernel/kleaf:__subpackages__"],
+    deps = ["@bazel_skylib//lib:paths"],
+)
+
+bzl_library(
+    name = "hermetic_tools_def",
+    srcs = ["hermetic_tools.bzl"],
+    visibility = ["//build/kernel/kleaf:__subpackages__"],
+    deps = ["@bazel_skylib//lib:paths"],
+)
+
+bzl_library(
+    name = "update_source_file_def",
+    srcs = ["update_source_file.bzl"],
+    visibility = ["//build/kernel/kleaf:__subpackages__"],
+    deps = [":hermetic_tools_def"],
+)
 
 # Docs. To view them:
 #   bazel run //build/kernel/kleaf:docs_server
@@ -95,8 +124,8 @@ docs(
     deps = [
         "//build/bazel_common_rules/dist",
         "//build/bazel_common_rules/exec",
+        "//build/kernel/kleaf/artifact_tests",
         "//build/kernel/kleaf/impl",
-        "//build/kernel/kleaf/tests",
         "@bazel_skylib//lib:paths",
         "@bazel_skylib//rules:common_settings",
         "@kernel_toolchain_info//:dict",
@@ -135,7 +164,9 @@ py_test(
 test_suite(
     name = "quick_tests",
     tests = [
+        ":check_declared_output_list_test",
         "//build/bazel_common_rules/exec/tests",
+        "//build/kernel/kleaf/tests",
         "//prebuilts/build-tools/tests",
     ],
 )

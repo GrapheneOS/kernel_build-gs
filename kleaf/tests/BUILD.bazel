@@ -12,17 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+load(
+    "//build/kernel/kleaf:kernel.bzl",
+    "kernel_build_config",
+)
+load(":diff_test.bzl", "diff_test")
 
-exports_files([
-    "kernel_build_test.py",
-    "kernel_module_test.py",
-])
-
-bzl_library(
-    name = "tests",
+kernel_build_config(
+    name = "test_build_config",
     srcs = [
-        "kernel_test.bzl",
+        # do not sort
+        "build.config.2",
+        "build.config.1",
     ],
-    visibility = ["//build/kernel/kleaf:__subpackages__"],
+)
+
+diff_test(
+    name = "build_config_test",
+    actual = ":test_build_config",
+    expected = "build.config.expected",
+)
+
+test_suite(
+    name = "tests",
+    tests = [
+        ":build_config_test",
+    ],
 )

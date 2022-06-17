@@ -14,6 +14,8 @@
 
 load("//build/kernel/kleaf:workspace.bzl", "define_kleaf_workspace")
 
-toplevel_output_directories(paths = ["out"])
-
 define_kleaf_workspace()
+
+# Optional epilog for analysis testing.
+load("//build/kernel/kleaf:workspace_epilog.bzl", "define_kleaf_workspace_epilog")
+define_kleaf_workspace_epilog()
