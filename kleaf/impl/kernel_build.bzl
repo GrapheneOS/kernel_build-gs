@@ -35,6 +35,7 @@ load(
 )
 load(
     ":constants.bzl",
+    "MODULES_STAGING_ARCHIVE",
     "MODULE_OUTS_FILE_OUTPUT_GROUP",
     "MODULE_OUTS_FILE_SUFFIX",
     "TOOLCHAIN_VERSION_FILENAME",
@@ -603,7 +604,7 @@ def _kernel_build_impl(ctx):
     )
 
     modules_staging_archive = ctx.actions.declare_file(
-        "{name}/modules_staging_dir.tar.gz".format(name = ctx.label.name),
+        "{}/{}".format(ctx.label.name, MODULES_STAGING_ARCHIVE),
     )
     out_dir_kernel_headers_tar = ctx.actions.declare_file(
         "{name}/out-dir-kernel-headers.tar.gz".format(name = ctx.label.name),
