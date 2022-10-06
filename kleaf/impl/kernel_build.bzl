@@ -820,6 +820,7 @@ def _kernel_build_impl(ctx):
         trim_nonlisted_kmi = ctx.attr.trim_nonlisted_kmi,
         combined_abi_symbollist = ctx.file.combined_abi_symbollist,
         module_outs_file = all_module_names_file,
+        modules_staging_archive = modules_staging_archive,
     )
 
     # Device modules takes precedence over base_kernel (GKI) modules.

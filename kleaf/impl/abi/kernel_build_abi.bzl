@@ -280,6 +280,7 @@ def _define_abi_targets(
         # modules list from base_kernel (GKI). If base_kernel is not set, this
         # likely a GKI build, so use modules_outs from itself.
         gki_modules_list_kernel_build = kernel_build_kwargs.get("base_kernel", name),
+        kernel_build_for_base_modules = kernel_build_kwargs.get("base_kernel", name),
     )
     update_source_file(
         name = name + "_abi_update_symbol_list",
