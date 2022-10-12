@@ -429,7 +429,7 @@ def _kernel_module_impl(ctx):
             files = ctx.outputs.outs,
         ),
         KernelUnstrippedModulesInfo(
-            directory = unstripped_dir,
+            directories = depset([unstripped_dir], order = "postorder"),
         ),
     ]
 

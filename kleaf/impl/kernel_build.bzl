@@ -815,9 +815,14 @@ def _kernel_build_impl(ctx):
         module_outs_file = all_module_names_file,
     )
 
+    # TODO(b/250097199): the device GKI modules should be prioritized over generic modules
+    unstripped_modules_depsets = []
+    if ctx.attr.base_kernel:
+        unstripped_modules_depsets.append(ctx.attr.base_kernel[KernelUnstrippedModulesInfo].directories)
+    if unstripped_dir:
+        unstripped_modules_depsets.append(depset([unstripped_dir]))
     kernel_unstripped_modules_info = KernelUnstrippedModulesInfo(
-        base_kernel = ctx.attr.base_kernel,
-        directory = unstripped_dir,
+        directories = depset(transitive = unstripped_modules_depsets, order = "postorder"),
     )
 
     in_tree_modules_info = KernelBuildInTreeModulesInfo(

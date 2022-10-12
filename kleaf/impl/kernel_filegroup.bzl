@@ -75,7 +75,9 @@ def _kernel_filegroup_impl(ctx):
             progress_message = "Extracting unstripped_modules_archive {}".format(ctx.label),
             mnemonic = "KernelFilegroupUnstrippedModulesArchive",
         )
-        unstripped_modules_info = KernelUnstrippedModulesInfo(directory = unstripped_dir)
+        unstripped_modules_info = KernelUnstrippedModulesInfo(
+            directories = depset([unstripped_dir], order = "postorder"),
+        )
 
     abi_info = KernelBuildAbiInfo(module_outs_file = ctx.file.module_outs_file)
     in_tree_modules_info = KernelBuildInTreeModulesInfo(module_outs_file = ctx.file.module_outs_file)
