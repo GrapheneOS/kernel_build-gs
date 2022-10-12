@@ -79,9 +79,9 @@ export MODULES_ARCHIVE=modules.tar.gz
 export TZ=UTC
 export LC_ALL=C
 if [ -z "${SOURCE_DATE_EPOCH}" ]; then
-  export SOURCE_DATE_EPOCH=$(git -C ${ROOT_DIR}/${KERNEL_DIR} log -1 --pretty=%ct)
+  export SOURCE_DATE_EPOCH="0"
 fi
-export KBUILD_BUILD_TIMESTAMP="$(date -d @${SOURCE_DATE_EPOCH})"
+export KBUILD_BUILD_TIMESTAMP="$(date -ud @${SOURCE_DATE_EPOCH})"
 export KBUILD_BUILD_HOST=build-host
 export KBUILD_BUILD_USER=build-user
 export KBUILD_BUILD_VERSION=1
