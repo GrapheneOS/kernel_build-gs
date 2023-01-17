@@ -522,21 +522,25 @@ def define_common_kernels(
             arch_config = arch_config,
         )
 
-        dist_targets = [
-            name,
-            name + "_uapi_headers",
-            name + "_unstripped_modules_archive",
-            name + "_additional_artifacts",
-            name + "_ddk_artifacts",
-            name + "_modules",
-            name + "_modules_install",
-            # BUILD_GKI_CERTIFICATION_TOOLS=1 for all kernel_build defined here.
-            "//build/kernel:gki_certification_tools",
-        ]
+        _define_gki_additional_targets(
+            kernel_build_name = name + "_with_vmlinux",
+            target_config = target_config,
+            arch_config = arch_config,
+        )
 
         copy_to_dist_dir(
             name = name + "_dist",
-            data = dist_targets,
+            data = [
+                name,
+                name + "_uapi_headers",
+                name + "_unstripped_modules_archive",
+                name + "_additional_artifacts",
+                name + "_ddk_artifacts",
+                name + "_modules",
+                name + "_modules_install",
+                # BUILD_GKI_CERTIFICATION_TOOLS=1 for all kernel_build defined here.
+                "//build/kernel:gki_certification_tools",
+            ],
             flat = True,
             dist_dir = "out/{branch}/dist".format(branch = BRANCH),
             log = "info",
@@ -545,7 +549,16 @@ def define_common_kernels(
         kernel_build_abi_dist(
             name = name + "_abi_dist",
             kernel_build_abi = name,
-            data = dist_targets,
+            data = [
+                name + "_with_vmlinux",
+                name + "_with_vmlinux_uapi_headers",
+                name + "_with_vmlinux_unstripped_modules_archive",
+                name + "_with_vmlinux_additional_artifacts",
+                name + "_with_vmlinux_ddk_artifacts",
+                name + "_with_vmlinux_modules",
+                name + "_with_vmlinux_modules_install",
+                # We don't certify binaries from ABI targets.
+            ],
             flat = True,
             dist_dir = "out_abi/{branch}/dist".format(branch = BRANCH),
             log = "info",
