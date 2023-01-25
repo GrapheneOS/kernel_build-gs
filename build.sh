@@ -230,6 +230,14 @@
 #     - MODULES_LIST=<file to list of modules> list of modules to use for
 #       vendor_boot.modules.load. If this property is not set, then the default
 #       modules.load is used.
+#    -  MODULES_RECOVERY_LIST=<file to list of modules> list of modules to load
+#       in addition to the modules defined in MODULES_LIST during first stage
+#       init when booting into recovery. If MODULES_LIST is not specified, this
+#       variable is ignored. Defining this variable is optional.
+#    -  MODULES_CHARGER_LIST=<file to list of modules> list of modules to load
+#       in addition to the modules defined in MODULES_LIST during first stage
+#       init when booting into charger mode. If MODULES_LIST is not specified, this
+#       variable is ignored. Defining this variable is optional.
 #     - TRIM_UNUSED_MODULES. If set, then modules not mentioned in
 #       modules.load are removed from initramfs. If MODULES_LIST is unset, then
 #       having this variable set effectively becomes a no-op.
@@ -1013,15 +1021,20 @@ if [ -n "${MODULES}" ]; then
     echo " Creating initramfs"
     rm -rf ${INITRAMFS_STAGING_DIR}
     create_modules_staging "${MODULES_LIST}" ${MODULES_STAGING_DIR} \
-      ${INITRAMFS_STAGING_DIR} "${MODULES_BLOCKLIST}" "-e"
-
+      ${INITRAMFS_STAGING_DIR} "${MODULES_BLOCKLIST}" "${MODULES_RECOVERY_LIST:-""}" \
+      "${MODULES_CHARGER_LIST:-""}" "-e"
     MODULES_ROOT_DIR=$(echo ${INITRAMFS_STAGING_DIR}/lib/modules/*)
-    cp ${MODULES_ROOT_DIR}/modules.load ${DIST_DIR}/modules.load
     if [ -n "${BUILD_VENDOR_BOOT_IMG}" ]; then
-      cp ${MODULES_ROOT_DIR}/modules.load ${DIST_DIR}/vendor_boot.modules.load
+      VENDOR_BOOT_NAME="vendor_boot"
     elif [ -n "${BUILD_VENDOR_KERNEL_BOOT}" ]; then
-      cp ${MODULES_ROOT_DIR}/modules.load ${DIST_DIR}/vendor_kernel_boot.modules.load
+      VENDOR_BOOT_NAME="vendor_kernel_boot"
     fi
+    MODULES_LOAD_FILES=( "modules.load" "modules.load.recovery" "modules.load.charger" )
+    for file in "${MODULES_LOAD_FILES[@]}"; do
+      [ -f ${MODULES_ROOT_DIR}/${file} ] && cp ${MODULES_ROOT_DIR}/${file} ${DIST_DIR}/${file}
+      [ -f ${MODULES_ROOT_DIR}/${file} -a -n "${VENDOR_BOOT_NAME}" ] && \
+              cp ${MODULES_ROOT_DIR}/${file} ${DIST_DIR}/${VENDOR_BOOT_NAME}.${file}
+    done
     echo "${MODULES_OPTIONS}" > ${MODULES_ROOT_DIR}/modules.options
 
     mkbootfs "${INITRAMFS_STAGING_DIR}" >"${MODULES_STAGING_DIR}/initramfs.cpio"
