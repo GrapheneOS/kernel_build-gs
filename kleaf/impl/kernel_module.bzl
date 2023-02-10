@@ -38,6 +38,7 @@ def kernel_module(
         kernel_build,
         outs = None,
         srcs = None,
+        deps = None,
         kernel_module_deps = None,
         **kwargs):
     """Generates a rule that builds an external kernel module.
@@ -73,11 +74,12 @@ def kernel_module(
           ])
           ```
         kernel_build: Label referring to the kernel_build module.
-        kernel_module_deps: A list of other kernel_module dependencies.
+        deps: A list of other `kernel_module` dependencies.
 
           Before building this target, `Modules.symvers` from the targets in
-          `kernel_module_deps` are restored, so this target can be built against
+          `deps` are restored, so this target can be built against
           them.
+        kernel_module_deps: **Deprecated**. Same as `deps`.
         outs: The expected output files. If unspecified or value is `None`, it
           is `["{name}.ko"]` by default.
 
@@ -133,13 +135,23 @@ def kernel_module(
           See complete list
           [here](https://docs.bazel.build/versions/main/be/common-definitions.html#common-attributes).
     """
+
+    # TODO(b/245348323): Stop supporting kernel_module_deps after all mainline
+    #   users cleans up.
+    if kernel_module_deps:
+        print("\nWARNING: //{}:{}: kernel_module_deps is deprecated. Use deps instead.".format(
+            native.package_name(),
+            name,
+        ))
+        deps = (deps or []) + kernel_module_deps
+
     kwargs.update(
         # This should be the exact list of arguments of kernel_module.
         # Default arguments of _kernel_module go into _kernel_module_set_defaults.
         name = name,
         srcs = srcs,
         kernel_build = kernel_build,
-        kernel_module_deps = kernel_module_deps,
+        deps = deps,
         outs = outs,
     )
     kwargs = _kernel_module_set_defaults(kwargs)
@@ -162,14 +174,14 @@ def kernel_module(
         sibling_kwargs = dict(kwargs)
         sibling_target_name = name + "_" + sibling_name
         sibling_kwargs["name"] = sibling_target_name
-        sibling_kwargs["outs"] = ["{sibling_target_name}/{out}".format(sibling_target_name = sibling_target_name, out = out) for out in outs]
+        sibling_kwargs["outs"] = ["{sibling_target_name}/{out}".format(sibling_target_name = sibling_target_name, out = out) for out in sibling_kwargs["outs"]]
 
         # This assumes the target is a kernel_build_abi with define_abi_targets
         # etc., which may not be the case. See below for adding "manual" tag.
         # TODO(b/231647455): clean up dependencies on implementation details.
         sibling_kwargs["kernel_build"] = sibling_kwargs["kernel_build"] + "_" + sibling_name
-        if sibling_kwargs.get("kernel_module_deps") != None:
-            sibling_kwargs["kernel_module_deps"] = [dep + "_" + sibling_name for dep in sibling_kwargs["kernel_module_deps"]]
+        if sibling_kwargs.get("deps") != None:
+            sibling_kwargs["deps"] = [dep + "_" + sibling_name for dep in sibling_kwargs["deps"]]
 
         # We don't know if {kernel_build}_{sibling_name} exists or not, so
         # add "manual" tag to prevent it from being built by default.
@@ -203,7 +215,8 @@ def _check_kernel_build(kernel_modules, kernel_build, this_label):
             ))
 
 def _kernel_module_impl(ctx):
-    _check_kernel_build(ctx.attr.kernel_module_deps, ctx.attr.kernel_build, ctx.label)
+    kernel_module_deps = ctx.attr.deps
+    _check_kernel_build(kernel_module_deps, ctx.attr.kernel_build, ctx.label)
 
     inputs = []
     inputs += ctx.files.srcs
@@ -215,7 +228,7 @@ def _kernel_module_impl(ctx):
         ctx.file._search_and_cp_output,
         ctx.file._check_declared_output_list,
     ]
-    for kernel_module_dep in ctx.attr.kernel_module_deps:
+    for kernel_module_dep in kernel_module_deps:
         inputs += kernel_module_dep[KernelEnvInfo].dependencies
 
     modules_staging_dws = dws.make(ctx, "{}/staging".format(ctx.attr.name))
@@ -271,7 +284,7 @@ def _kernel_module_impl(ctx):
     """.format(
         kernel_uapi_headers_dir = kernel_uapi_headers_dws.directory.path,
     )
-    for kernel_module_dep in ctx.attr.kernel_module_deps:
+    for kernel_module_dep in kernel_module_deps:
         command += kernel_module_dep[KernelEnvInfo].setup
 
     grab_unstripped_cmd = ""
@@ -313,10 +326,13 @@ def _kernel_module_impl(ctx):
                     --declared $(cat {all_module_names_file}) \\
                     --actual $(cd {modules_staging_dir}/lib/modules/*/extra/{ext_mod} && find . -type f -name '*.ko' | sed 's:^[.]/::'))
                if [[ ${{remaining_ko_files}} ]]; then
-                 echo "ERROR: The following kernel modules are built but not copied. Add these lines to the module_outs attribute of {label}:" >&2
+                 echo "ERROR: The following kernel modules are built but not copied. Add these lines to the outs attribute of {label}:" >&2
                  for ko in ${{remaining_ko_files}}; do
                    echo '    "'"${{ko}}"'",' >&2
                  done
+                 echo "Alternatively, install buildozer and execute:" >&2
+                 echo "  $ buildozer 'add outs ${{remaining_ko_files}}' {label}" >&2
+                 echo "See https://github.com/bazelbuild/buildtools/blob/master/buildozer/README.md for reference" >&2
                  exit 1
                fi
                touch {check_no_remaining}
@@ -426,7 +442,7 @@ def _kernel_module_impl(ctx):
             files = ctx.outputs.outs,
         ),
         KernelUnstrippedModulesInfo(
-            directory = unstripped_dir,
+            directories = depset([unstripped_dir], order = "postorder"),
         ),
     ]
 
@@ -446,7 +462,7 @@ _kernel_module = rule(
             mandatory = True,
             providers = [KernelEnvInfo, KernelBuildExtModuleInfo],
         ),
-        "kernel_module_deps": attr.label_list(
+        "deps": attr.label_list(
             providers = [KernelEnvInfo, KernelModuleInfo],
         ),
         "ext_mod": attr.string(mandatory = True),

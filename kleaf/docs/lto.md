@@ -55,5 +55,16 @@ well, because `--config=fast` implies thin LTO. See [fast.md](fast.md#lto).
 You may build the following to confirm the value of LTO setting:
 
 ```shell
-$ tools/bazel build //build/kernel/kleaf:print_flags
+$ tools/bazel build [flags] //build/kernel/kleaf:print_flags
 ```
+
+Note: `print_flags` shows values specified in the command line. For LTO, the
+above command may show `default` or `none`. However, if `--kasan` is specified,
+`--lto` is coerced into `none`, no matter if `--lto` is specified in the command
+line.
+
+## See also
+
+[kasan](kasan.md)
+
+[Build faster](fast.md)

@@ -16,6 +16,7 @@ load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//lib:shell.bzl", "shell")
 load("//build/kernel/kleaf:hermetic_tools.bzl", "HermeticToolsInfo")
 load(":common_providers.bzl", "KernelBuildInfo")
+load(":constants.bzl", "GKI_ARTIFACTS_AARCH64_OUTS")
 load(":utils.bzl", "utils")
 
 def _gki_artifacts_impl(ctx):
@@ -31,13 +32,10 @@ def _gki_artifacts_impl(ctx):
 
     outs = []
 
-    # build_gki_artifacts_aarch64 builds boot-img.tar.gz additionally.
-    # build_gki_artifacts_x86_64 does not build boot-img.tar.gz.
-    if ctx.attr.arch == "arm64":
-        tarball = ctx.actions.declare_file("{}/boot-img.tar.gz".format(ctx.label.name))
-        outs.append(tarball)
-        gki_info = ctx.actions.declare_file("{}/gki-info.txt".format(ctx.label.name))
-        outs.append(gki_info)
+    tarball = ctx.actions.declare_file("{}/boot-img.tar.gz".format(ctx.label.name))
+    outs.append(tarball)
+    gki_info = ctx.actions.declare_file("{}/gki-info.txt".format(ctx.label.name))
+    outs.append(gki_info)
 
     size_cmd = ""
     images = []
@@ -93,6 +91,13 @@ def _gki_artifacts_impl(ctx):
         mkbootimg = ctx.file.mkbootimg.path,
         size_cmd = size_cmd,
     )
+
+    if ctx.attr.arch == "arm64":
+        utils.compare_file_names(
+            outs,
+            GKI_ARTIFACTS_AARCH64_OUTS,
+            what = "{}: Internal error: not producing the expected list of outputs".format(ctx.label),
+        )
 
     ctx.actions.run_shell(
         command = command,

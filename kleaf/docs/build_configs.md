@@ -76,6 +76,9 @@ _"Not supported"_ is displayed. Contact [owners](../OWNERS) if you need support.
 * [`VENDOR_DLKM_MODULES_LIST`](#vendor_dlkm_modules_list)
 * [`VENDOR_DLKM_MODULES_BLOCKLIST`](#vendor_dlkm_modules_blocklist)
 * [`VENDOR_DLKM_PROPS`](#vendor_dlkm_props)
+* [`SYSTEM_DLKM_MODULES_LIST`](#system_dlkm_modules_list)
+* [`SYSTEM_DLKM_MODULES_BLOCKLIST`](#system_dlkm_modules_blocklist)
+* [`SYSTEM_DLKM_PROPS`](#system_dlkm_props)
 * [`LZ4_RAMDISK`](#lz4_ramdisk)
 * [`LZ4_RAMDISK_COMPRESS_ARGS`](#lz4_ramdisk_compress_args)
 * [`TRIM_NONLISTED_KMI`](#trim_nonlisted_kmi)
@@ -91,6 +94,7 @@ _"Not supported"_ is displayed. Contact [owners](../OWNERS) if you need support.
 * [`MKBOOTIMG_PATH`](#mkbootimg_path)
 * [`BUILD_GKI_ARTIFACTS`](#build_gki_artifacts)
 * [`GKI_KERNEL_CMDLINE`](#gki_kernel_cmdline)
+* [`KMI_SYMBOL_LIST_ADD_ONLY`](#kmi_symbol_list_add_only)
 
 ## BUILD\_CONFIG
 
@@ -491,7 +495,7 @@ Reason: The Bazel build already sets the order of loading modules for you, and
 
 Not customizable in Bazel.
 
-Reason: This is set to a fixed value in the `module_outs` attribute of
+Reason: This is set to a fixed value in the `module_implicit_outs` attribute of
 `//common:kernel_aarch64`.
 
 See [documentation for all rules].
@@ -520,11 +524,35 @@ kernel_images(vendor_dlkm_props=...)
 
 See [documentation for all rules].
 
+## SYSTEM\_DLKM\_MODULES\_LIST
+
+```python
+kernel_images(system_dlkm_modules_list=...)
+```
+
+See [documentation for all rules].
+
+## SYSTEM\_DLKM\_MODULES\_BLOCKLIST
+
+```python
+kernel_images(system_dlkm_modules_blocklist=...)
+```
+
+See [documentation for all rules].
+
+## SYSTEM\_DLKM\_PROPS
+
+```python
+kernel_images(system_dlkm_props=...)
+```
+
+See [documentation for all rules].
+
 ## LZ4\_RAMDISK
 
 Specify in the build config.
 
-## LZ4\_RAMDISK_COMPRESS_ARGS
+## LZ4\_RAMDISK\_COMPRESS\_ARGS
 
 Specify in the build config.
 
@@ -539,7 +567,7 @@ See [documentation for all rules].
 
 See [documentation for ABI monitoring].
 
-## KMI\_SYMBOL_LIST\_STRICT\_MODE
+## KMI\_SYMBOL\_LIST\_STRICT\_MODE
 
 ```python
 kernel_build(kmi_symbol_list_strict_mode=...)
@@ -705,6 +733,16 @@ $ bazel build --kbuild_symtypes ...
 ```
 
 See [symtypes.md](symtypes.md) for details.
+
+## KMI\_SYMBOL\_LIST\_ADD\_ONLY
+
+```python
+kernel_build_abi(kmi_symbol_list_add_only=...)
+```
+
+See [documentation for all rules].
+
+See [documentation for ABI monitoring].
 
 [documentation for all rules]: https://ci.android.com/builds/latest/branches/aosp_kernel-common-android-mainline/targets/kleaf_docs/view/index.html
 
