@@ -95,6 +95,9 @@ _TARGET_CONFIG_VALID_KEYS = _KERNEL_BUILD_ABI_VALID_KEYS + [
 # Always collect_unstripped_modules for common kernels.
 _COLLECT_UNSTRIPPED_MODULES = True
 
+# Always keep a copy of Module.symvers for common kernels.
+_KEEP_MODULE_SYMVERS = True
+
 # glob() must be executed in a BUILD thread, so this cannot be a global
 # variable.
 def _default_target_configs():
@@ -509,6 +512,7 @@ def define_common_kernels(
             # Sync with KMI_SYMBOL_LIST_MODULE_GROUPING
             module_grouping = None,
             collect_unstripped_modules = _COLLECT_UNSTRIPPED_MODULES,
+            keep_module_symvers = _KEEP_MODULE_SYMVERS,
             toolchain_version = toolchain_version,
             **kernel_build_abi_kwargs
         )
