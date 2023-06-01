@@ -11,9 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Functions that are useful in the common kernel package (usually `//common`)."""
 
 load("@bazel_skylib//lib:dicts.bzl", "dicts")
-load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 load(
     ":kernel.bzl",
@@ -30,7 +30,6 @@ load(
 load("//build/bazel_common_rules/dist:dist.bzl", "copy_to_dist_dir")
 load("//build/kernel/kleaf/artifact_tests:kernel_test.bzl", "initramfs_modules_options_test")
 load("//build/kernel/kleaf/impl:gki_artifacts.bzl", "gki_artifacts")
-load("//build/kernel/kleaf/impl:utils.bzl", "utils")
 load(
     "//build/kernel/kleaf/impl:constants.bzl",
     "MODULE_OUTS_FILE_OUTPUT_GROUP",
@@ -174,6 +173,7 @@ def _filter_keys(d, valid_keys, what = "", allow_unknown_keys = False):
         ))
     return ret
 
+# buildifier: disable=unnamed-macro
 def define_common_kernels(
         branch = None,
         target_configs = None,
@@ -814,7 +814,7 @@ def _define_common_kernels_additional_tests(
 
     kernel_images(
         name = test_name + "_fake_images",
-        kernel_modules_install = kernel_build_name + "_modules_install",
+        kernel_modules_install = kernel_modules_install,
         build_initramfs = True,
         modules_options = fake_modules_options,
     )
@@ -833,7 +833,7 @@ def _define_common_kernels_additional_tests(
 
     kernel_images(
         name = test_name + "_empty_images",
-        kernel_modules_install = kernel_build_name + "_modules_install",
+        kernel_modules_install = kernel_modules_install,
         build_initramfs = True,
         # Not specify module_options
     )

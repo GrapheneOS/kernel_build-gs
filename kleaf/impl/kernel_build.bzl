@@ -11,6 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Defines a kernel build target.
+"""
 
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
@@ -257,10 +260,10 @@ def kernel_build(
 
           Labels are created for each item in `module_implicit_outs` as in `outs`.
 
-        kmi_symbol_list: A label referring to the main KMI symbol list file. See `additional_kmi_symbol_list`.
+        kmi_symbol_list: A label referring to the main KMI symbol list file. See `additional_kmi_symbol_lists`.
 
           This is the Bazel equivalent of `ADDTIONAL_KMI_SYMBOL_LISTS`.
-        additional_kmi_symbol_list: A list of labels referring to additional KMI symbol list files.
+        additional_kmi_symbol_lists: A list of labels referring to additional KMI symbol list files.
 
           This is the Bazel equivalent of `ADDTIONAL_KMI_SYMBOL_LISTS`.
 
@@ -323,7 +326,8 @@ def kernel_build(
           If the value is `"false"`; or the value is `"auto"` and
           `--kbuild_symtypes` is not specified, then `KBUILD_SYMTYPES=`.
         toolchain_version: The toolchain version to depend on.
-        kwargs: Additional attributes to the internal rule, e.g.
+        dtstree: Device tree support.
+        **kwargs: Additional attributes to the internal rule, e.g.
           [`visibility`](https://docs.bazel.build/versions/main/visibility.html).
           See complete list
           [here](https://docs.bazel.build/versions/main/be/common-definitions.html#common-attributes).
@@ -349,7 +353,7 @@ def kernel_build(
         )
 
     internal_kwargs = dict(kwargs)
-    internal_kwargs.pop("visibility", default = None)
+    internal_kwargs.pop("visibility", None)
 
     kwargs_with_manual = dict(kwargs)
     kwargs_with_manual["tags"] = ["manual"]
@@ -930,6 +934,7 @@ _kernel_build = rule(
     },
 )
 
+#buildifier: disable=return-value
 def _kernel_build_check_toolchain(ctx):
     """
     Check toolchain_version is the same as base_kernel.
@@ -941,6 +946,7 @@ def _kernel_build_check_toolchain(ctx):
     base_toolchain_file = utils.getoptattr(base_kernel[KernelToolchainInfo], "toolchain_version_file")
 
     if base_toolchain == None and base_toolchain_file == None:
+        # buildifier: disable=print
         print(("\nWARNING: {this_label}: No check is performed between the toolchain " +
                "version of the base build ({base_kernel}) and the toolchain version of " +
                "{this_name} ({this_toolchain}), because the toolchain version of {base_kernel} " +
