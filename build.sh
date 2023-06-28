@@ -530,7 +530,7 @@ if [ -n "${GKI_BUILD_CONFIG}" ]; then
   fi
 
   # Inherit SKIP_MRPROPER, LTO, SKIP_DEFCONFIG unless overridden by corresponding GKI_* variables
-  GKI_ENVIRON=("SKIP_MRPROPER=${SKIP_MRPROPER}" "LTO=${LTO}" "SKIP_DEFCONFIG=${SKIP_DEFCONFIG}" "SKIP_IF_VERSION_MATCHES=${SKIP_IF_VERSION_MATCHES}")
+  GKI_ENVIRON=("SKIP_MRPROPER=${SKIP_MRPROPER}" "KASAN=${KASAN}" "LTO=${LTO}" "SKIP_DEFCONFIG=${SKIP_DEFCONFIG}" "SKIP_IF_VERSION_MATCHES=${SKIP_IF_VERSION_MATCHES}")
   # Explicitly unset EXT_MODULES since they should be compiled against the device kernel
   GKI_ENVIRON+=("EXT_MODULES=")
   # Explicitly unset GKI_BUILD_CONFIG in case it was set by in the old environment
@@ -655,6 +655,29 @@ if [ "${SKIP_DEFCONFIG}" != "1" ] ; then
     eval ${POST_DEFCONFIG_CMDS}
     set +x
   fi
+fi
+
+if [ "${KASAN}" = "sw_tags" ]; then
+  echo "====================================================="
+  echo "Enabling KASAN"
+
+  set -x
+  ${KERNEL_DIR}/scripts/config --file ${OUT_DIR}/.config \
+      -e CONFIG_KASAN \
+      -e CONFIG_KASAN_SW_TAGS \
+      -e CONFIG_KASAN_OUTLINE \
+      -e CONFIG_PANIC_ON_WARN_DEFAULT_ENABLE \
+      -d CONFIG_KASAN_HW_TAGS \
+      --set-val CONFIG_FRAME_WARN 0 \
+      -d CFI \
+      -d CFI_PERMISSIVE \
+      -d CFI_CLANG \
+      -d SHADOW_CALL_STACK \
+      -d RANDOMIZE_BASE
+
+      (cd ${OUT_DIR} && make ${TOOL_ARGS} O=${OUT_DIR} "${MAKE_ARGS[@]}" olddefconfig)
+      set +x
+      LTO="none"
 fi
 
 if [ "${LTO}" = "none" -o "${LTO}" = "thin" -o "${LTO}" = "full" ]; then
