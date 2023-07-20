@@ -83,6 +83,7 @@ _KERNEL_BUILD_ABI_VALID_KEYS = [
     "abi_definition",
     "kmi_enforced",
     "module_implicit_outs",
+    "kmi_symbol_list_add_only",
 ]
 
 # Valid configs of the value of the target_config argument in
